@@ -220,4 +220,4 @@ This workaround is enabled automatically when running in simulation mode, preven
 
 ## License
 
-This package is licensed under the MIT License. See [LICENSE](file:///Users/kartik/Desktop/WaveKit/LICENSE) for details.
+This package is licensed under the MIT License.
