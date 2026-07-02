@@ -33,6 +33,7 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
     @Environment(\.waveTargetColor) private var targetColor
     @Environment(\.waveTargetFunction) private var targetFunction
     @Environment(\.waveIsPureTone) private var isPureTone
+    @Environment(\.waveShowGrid) private var showGrid
 
 #if os(macOS)
     func makeNSView(context: Context) -> SCNView {
@@ -54,7 +55,7 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
         let scnView = SCNView()
         let scene   = SCNScene()
         scnView.scene = scene
-        scnView.backgroundColor = PlatformColor(red: 0.01, green: 0.02, blue: 0.06, alpha: 1)
+        scnView.backgroundColor = .clear
         scnView.allowsCameraControl = true
         scnView.autoenablesDefaultLighting = false
         scnView.isJitteringEnabled = true
@@ -80,7 +81,9 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
         ambNode.light = ambient
         scene.rootNode.addChildNode(ambNode)
 
-        scene.rootNode.addChildNode(buildGrid())
+        let gridNode = buildGrid()
+        gridNode.name = "grid"
+        scene.rootNode.addChildNode(gridNode)
 
         let userWaveNode   = SCNNode(); userWaveNode.name   = "userWave"
         let targetWaveNode = SCNNode(); targetWaveNode.name = "targetWave"
@@ -124,6 +127,9 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
             progress: Float(progress),
             animationSpeed: Float(animationSpeed)
         )
+        
+        let gridNode = uiView.scene?.rootNode.childNode(withName: "grid", recursively: false)
+        gridNode?.isHidden = !showGrid
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }

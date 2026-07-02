@@ -188,4 +188,9 @@ extension View {
     public func isECG(_ enabled: Bool) -> some View {
         environment(\.waveIsECG, enabled)
     }
+
+    /// Toggles visibility of the 3D grid.
+    public func showGrid(_ enabled: Bool = true) -> some View {
+        environment(\.waveShowGrid, enabled)
+    }
 }

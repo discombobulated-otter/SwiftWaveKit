@@ -4,6 +4,7 @@ import WaveKit
 struct ProgressWaveDemo: View {
     @State private var progress: Double = 0.5
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -42,6 +43,7 @@ struct ProgressWaveDemo: View {
                         .animated(isAnimated)
                         .progress(progress)
                         .renderMode3D(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                     
                     // Centered Text indicator overlay
@@ -93,11 +95,20 @@ struct ProgressWaveDemo: View {
                         }
                     }
                     
-                    Toggle(isOn: $isAnimated) {
-                        Text("Animate Waves")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                    HStack(spacing: 30) {
+                        Toggle(isOn: $isAnimated) {
+                            Text("Animate")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Toggle(isOn: $showGrid) {
+                            Text("Show Grid")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
                     }
                     .tint(.cyan)
                 }

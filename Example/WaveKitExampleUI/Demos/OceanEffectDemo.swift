@@ -8,6 +8,7 @@ struct OceanEffectDemo: View {
     @State private var targetFreq: Double = 2.5
     @State private var isAligning: Bool = false
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -52,6 +53,7 @@ struct OceanEffectDemo: View {
                         .isAligning(isAligning)
                         .animated(isAnimated)
                         .renderMode3D(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 250)
@@ -59,11 +61,16 @@ struct OceanEffectDemo: View {
                 
                 VStack(spacing: 20) {
                     // Align Toggle
-                    Toggle(isOn: $isAligning) {
-                        HStack {
-                            Image(systemName: "waveform.path")
-                                .foregroundColor(.cyan)
-                            Text("Overlap/Align Waves (Interference)")
+                    HStack(spacing: 30) {
+                        Toggle(isOn: $isAligning) {
+                            Text("Align Overlap")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Toggle(isOn: $showGrid) {
+                            Text("Show Grid")
                                 .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)

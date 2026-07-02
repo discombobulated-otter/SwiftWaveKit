@@ -6,6 +6,7 @@ struct DampedWaveDemo: View {
     @State private var frequency: Double = 3.0
     @State private var amplitude: Double = 1.5
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -44,6 +45,7 @@ struct DampedWaveDemo: View {
                         .waveColor(.orange)
                         .animated(isAnimated)
                         .renderMode3D(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
@@ -54,11 +56,20 @@ struct DampedWaveDemo: View {
                     DemoSlider(title: "Base Amplitude", value: $amplitude, range: 0.5...2.5, format: "%.2f")
                     DemoSlider(title: "Frequency", value: $frequency, range: 1.0...6.0, format: "%.1f")
                     
-                    Toggle(isOn: $isAnimated) {
-                        Text("Animate movement")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                    HStack(spacing: 30) {
+                        Toggle(isOn: $isAnimated) {
+                            Text("Animate")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Toggle(isOn: $showGrid) {
+                            Text("Show Grid")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
                     }
                     .tint(.orange)
                 }

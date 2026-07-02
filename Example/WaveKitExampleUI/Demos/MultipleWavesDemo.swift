@@ -7,6 +7,7 @@ struct MultipleWavesDemo: View {
     @State private var frequency2: Double = 3.0
     @State private var isAnimated: Bool = true
     @State private var isPureTone: Bool = false
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -47,6 +48,7 @@ struct MultipleWavesDemo: View {
                         .waveColor(.white)
                         .animated(isAnimated)
                         .renderMode3D(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
@@ -60,9 +62,9 @@ struct MultipleWavesDemo: View {
                         DemoSlider(title: "Frequency 2", value: $frequency2, range: 0.5...5.0, format: "%.1f")
                     }
                     
-                    HStack(spacing: 40) {
+                    HStack(spacing: 30) {
                         Toggle(isOn: $isPureTone) {
-                            Text("Pure Tone (Freq 1 Only)")
+                            Text("Pure")
                                 .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.semibold)
                                 .foregroundColor(.white)
@@ -70,6 +72,13 @@ struct MultipleWavesDemo: View {
                         
                         Toggle(isOn: $isAnimated) {
                             Text("Animate")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Toggle(isOn: $showGrid) {
+                            Text("Grid")
                                 .font(.system(.subheadline, design: .rounded))
                                 .fontWeight(.semibold)
                                 .foregroundColor(.white)

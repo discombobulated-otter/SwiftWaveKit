@@ -5,6 +5,7 @@ struct ECGStyleDemo: View {
     @State private var heartRate: Double = 60.0
     @State private var amplitude: Double = 1.0
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -42,6 +43,7 @@ struct ECGStyleDemo: View {
                         .animated(isAnimated)
                         .renderMode3D(true)
                         .isECG(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
@@ -50,21 +52,26 @@ struct ECGStyleDemo: View {
                 VStack(spacing: 24) {
                     DemoSlider(title: "Signal Amplitude", value: $amplitude, range: 0.2...2.0, format: "%.2f")
                     
-                    HStack(alignment: .center) {
+                    HStack(alignment: .center, spacing: 20) {
                         Image(systemName: "heart.fill")
                             .foregroundColor(.green)
                             .symbolEffect(.pulse, options: .repeating, value: isAnimated)
                         
-                        Text("Simulating Heart Activity")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Toggle("", isOn: $isAnimated)
+                        Toggle("Animate", isOn: $isAnimated)
                             .labelsHidden()
                             .tint(.green)
+                        
+                        Text("Animate")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Toggle("Grid", isOn: $showGrid)
+                            .labelsHidden()
+                            .tint(.green)
+                        
+                        Text("Grid")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(.white)
                     }
                     .padding(.vertical, 8)
                 }
