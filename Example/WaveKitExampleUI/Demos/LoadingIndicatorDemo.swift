@@ -6,6 +6,7 @@ struct LoadingIndicatorDemo: View {
     @State private var pulseSpeed: Double = 1.5
     @State private var isSpinning: Bool = false
     @State private var scale: CGFloat = 1.0
+    @State private var showGrid: Bool = false
     
     // We will automatically pulse the amplitude using a timer
     @State private var amplitude: Double = 1.0
@@ -48,6 +49,7 @@ struct LoadingIndicatorDemo: View {
                             .waveColor(.cyan)
                             .animated(true)
                             .renderMode3D(true)
+                            .showGrid(showGrid)
                             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                             .scaleEffect(scale)
                     }
@@ -62,6 +64,15 @@ struct LoadingIndicatorDemo: View {
                 // Controls Panel
                 VStack(spacing: 20) {
                     DemoSlider(title: "Pulse Speed multiplier", value: $pulseSpeed, range: 0.5...3.0, format: "%.1f")
+                    
+                    Toggle(isOn: $showGrid) {
+                        Text("Show 3D Perspective Grid")
+                            .font(.system(.subheadline, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                    }
+                    .tint(.cyan)
+                    .padding(.bottom, 8)
                     
                     HStack(spacing: 30) {
                         Button(action: {

@@ -80,6 +80,7 @@ public struct WaveConfiguration: Sendable {
     public var targetColor: Color = .white
     public var targetFunction: WaveFunction? = nil
     public var isPureTone: Bool = false
+    public var showGrid: Bool = true
 
     public init() {}
 }
@@ -238,6 +239,10 @@ struct WaveIsPureToneKey: EnvironmentKey {
     static let defaultValue: Bool = false
 }
 
+struct WaveShowGridKey: EnvironmentKey {
+    static let defaultValue: Bool = true
+}
+
 extension EnvironmentValues {
     public var waveRenderMode: WaveRenderMode {
         get { self[WaveRenderModeKey.self] }
@@ -282,5 +287,9 @@ extension EnvironmentValues {
     public var waveIsECG: Bool {
         get { self[WaveIsECGKey.self] }
         set { self[WaveIsECGKey.self] = newValue }
+    }
+    public var waveShowGrid: Bool {
+        get { self[WaveShowGridKey.self] }
+        set { self[WaveShowGridKey.self] = newValue }
     }
 }

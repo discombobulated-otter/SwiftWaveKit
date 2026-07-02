@@ -158,6 +158,7 @@ WaveKit uses SwiftUI environment keys to pass parameters down the view tree. You
 - **`.progress(_ value: Double)`**: Limits the portion of the 3D wave generated along the Z-depth axis (`0.0` to `1.0`). Defaults to `1.0`.
 - **`.isECG(_ enabled: Bool)`**: Toggles specialized green glowing 3D cardiac PQRST heartbeat ribbon geometry. Defaults to `false`.
 - **`.isPureTone(_ enabled: Bool)`**: Toggles pure tone rendering mode (removes secondary/composite frequencies in the visualizer). Defaults to `false`.
+- **`.showGrid(_ enabled: Bool)`**: Toggles visibility of the 3D perspective grid. Defaults to `true`.
 
 ### Target Matching & Interference (3D Mode)
 - **`.showInterference(_ enabled: Bool)`**: Render a secondary comparison target wave alongside the main user wave. Defaults to `false`.

@@ -6,6 +6,7 @@ struct WaveQuestLevel5Demo: View {
     @State private var modDepth: Double = 0.8
     @State private var modFreq: Double = 0.5
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -48,6 +49,7 @@ struct WaveQuestLevel5Demo: View {
                         .waveColor(.purple)
                         .animated(isAnimated)
                         .renderMode3D(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
@@ -58,11 +60,20 @@ struct WaveQuestLevel5Demo: View {
                     DemoSlider(title: "Modulation Depth", value: $modDepth, range: 0.0...1.0, format: "%.2f")
                     DemoSlider(title: "Modulation Frequency", value: $modFreq, range: 0.1...2.0, format: "%.2f")
                     
-                    Toggle(isOn: $isAnimated) {
-                        Text("Animate modulation wave")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                    HStack(spacing: 30) {
+                        Toggle(isOn: $isAnimated) {
+                            Text("Animate")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
+                        
+                        Toggle(isOn: $showGrid) {
+                            Text("Show Grid")
+                                .font(.system(.subheadline, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        }
                     }
                     .tint(.purple)
                 }

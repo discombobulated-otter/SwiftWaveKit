@@ -5,6 +5,7 @@ struct BasicSineDemo: View {
     @State private var amplitude: Double = 1.0
     @State private var frequency: Double = 2.0
     @State private var isAnimated: Bool = true
+    @State private var showGrid: Bool = true
     
     var body: some View {
         ZStack {
@@ -45,6 +46,7 @@ struct BasicSineDemo: View {
                         .animated(isAnimated)
                         .renderMode3D(true)
                         .isPureTone(true)
+                        .showGrid(showGrid)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
@@ -57,6 +59,14 @@ struct BasicSineDemo: View {
                     
                     Toggle(isOn: $isAnimated) {
                         Text("Animate Movement")
+                            .font(.system(.subheadline, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                    }
+                    .tint(.cyan)
+                    
+                    Toggle(isOn: $showGrid) {
+                        Text("Show 3D Grid")
                             .font(.system(.subheadline, design: .rounded))
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
