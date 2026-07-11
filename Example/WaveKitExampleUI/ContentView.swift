@@ -49,11 +49,9 @@ public struct ContentView: View {
                                 .shadow(color: .black.opacity(0.4), radius: 15, x: 0, y: 8)
                             
                             WaveView(.sine)
-                                .amplitude(amplitude)
-                                .frequency(frequency)
-                                .waveColor(.cyan)
-                                .animated(true)
-                                .renderMode3D(true)
+                                .waveform(amplitude: amplitude, frequency: frequency)
+                                .waveStyle(WaveStyle(color: .cyan))
+                                .animated(speed: 1.0)
                                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                             
                             // Floating Interactive Overlay Text
@@ -116,14 +114,14 @@ public struct ContentView: View {
                                 destination: AnyView(MultipleWavesDemo())
                             )
                             
-                                                        DashboardCard(
-                                title: "Damped Decay",
-                                subtitle: "Energy loss over depth",
-                                icon: "waveform.path.badge.minus",
-                                color: .orange,
-                                destination: AnyView(DampedWaveDemo())
-                            )
-                            
+//                                                        DashboardCard(
+//                                title: "Damped Decay",
+//                                subtitle: "Energy loss over depth",
+//                                icon: "waveform.path.badge.minus",
+//                                color: .orange,
+//                                destination: AnyView(DampedWaveDemo())
+//                            )
+//                            
                             DashboardCard(
                                 title: "Ocean Effect",
                                 subtitle: "Overlap & interference",
@@ -140,13 +138,13 @@ public struct ContentView: View {
                                 destination: AnyView(ECGStyleDemo())
                             )
                             
-                            DashboardCard(
-                                title: "Load Indicators",
-                                subtitle: "Animation micro-pulses",
-                                icon: "arrow.triangle.2.circlepath",
-                                color: .yellow,
-                                destination: AnyView(LoadingIndicatorDemo())
-                            )
+//                            DashboardCard(
+//                                title: "Load Indicators",
+//                                subtitle: "Animation micro-pulses",
+//                                icon: "arrow.triangle.2.circlepath",
+//                                color: .yellow,
+//                                destination: AnyView(LoadingIndicatorDemo())
+//                            )
                             
                             DashboardCard(
                                 title: "Z-Depth Progress",
@@ -156,13 +154,13 @@ public struct ContentView: View {
                                 destination: AnyView(ProgressWaveDemo())
                             )
                             
-                            DashboardCard(
-                                title: "AM Modulation",
-                                subtitle: "WaveQuest Level 5",
-                                icon: "radio",
-                                color: .purple,
-                                destination: AnyView(WaveQuestLevel5Demo())
-                            )
+//                            DashboardCard(
+//                                title: "AM Modulation",
+//                                subtitle: "WaveQuest Level 5",
+//                                icon: "radio",
+//                                color: .purple,
+//                                destination: AnyView(WaveQuestLevel5Demo())
+//                            )
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)

@@ -3,10 +3,8 @@ import Combine
 import WaveKit
 
 struct LoadingIndicatorDemo: View {
-    @State private var pulseSpeed: Double = 1.5
     @State private var isSpinning: Bool = false
     @State private var scale: CGFloat = 1.0
-    @State private var showGrid: Bool = false
     
     // We will automatically pulse the amplitude using a timer
     @State private var amplitude: Double = 1.0
@@ -44,12 +42,11 @@ struct LoadingIndicatorDemo: View {
                             .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                         
                         WaveView(.sine)
-                            .amplitude(amplitude)
-                            .frequency(4.0)
-                            .waveColor(.cyan)
-                            .animated(true)
-                            .renderMode3D(true)
-                            .showGrid(showGrid)
+                            .waveform(amplitude: amplitude, frequency: 4.0)
+                            .waveStyle(WaveStyle(color: .cyan))
+                            .animated(speed: 1.0)
+                            .gridStyle(.init(lineCount: 0))
+                            .dropLineStyle(.init(lineCount: 0))
                             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                             .scaleEffect(scale)
                     }
@@ -61,77 +58,35 @@ struct LoadingIndicatorDemo: View {
                         .foregroundColor(.cyan)
                 }
                 
-                // Controls Panel
-                VStack(spacing: 20) {
-                    DemoSlider(title: "Pulse Speed multiplier", value: $pulseSpeed, range: 0.5...3.0, format: "%.1f")
-                    
-                    Toggle(isOn: $showGrid) {
-                        Text("Show 3D Perspective Grid")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                    .tint(.cyan)
-                    .padding(.bottom, 8)
-                    
-                    HStack(spacing: 30) {
-                        Button(action: {
-                            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
-                                isSpinning.toggle()
-                            }
-                        }) {
-                            Text(isSpinning ? "Stop Spinning" : "Spin 3D Box")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.cyan.opacity(0.2))
-                                .cornerRadius(15)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .stroke(Color.cyan, lineWidth: 1)
-                                )
-                        }
-                        
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                                scale = scale == 1.0 ? 0.8 : 1.2
-                            }
-                        }) {
-                            Text(scale != 1.0 ? "Stop Pulse" : "Pulse Scale")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.purple.opacity(0.2))
-                                .cornerRadius(15)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .stroke(Color.purple, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-                .padding(25)
-                .background(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                CodeSnippetView(code: """
+                WaveView(.sine)
+                    .waveform(
+                        amplitude: self.amplitude, 
+                        frequency: 4.0
+                    )
+                    .waveStyle(WaveStyle(color: .cyan))
+                    .animated(speed: 1.0)
+                    .gridStyle(.init(lineCount: 0))
+                    .dropLineStyle(.init(lineCount: 0))
+                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .scaleEffect(scale)
+                """)
                 
                 Spacer()
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(timer) { time in
-            let factor = sin(time.timeIntervalSince1970 * 2.0 * pulseSpeed)
+            let factor = sin(time.timeIntervalSince1970 * 2.0 * 1.5)
             amplitude = 1.0 + factor * 0.6
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                isSpinning = true
+            }
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                scale = 1.2
+            }
         }
     }
 }

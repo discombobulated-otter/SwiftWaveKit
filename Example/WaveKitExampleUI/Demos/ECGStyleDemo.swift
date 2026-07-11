@@ -2,11 +2,6 @@ import SwiftUI
 import WaveKit
 
 struct ECGStyleDemo: View {
-    @State private var heartRate: Double = 60.0
-    @State private var amplitude: Double = 1.0
-    @State private var isAnimated: Bool = true
-    @State private var showGrid: Bool = true
-    
     var body: some View {
         ZStack {
             LinearGradient(
@@ -38,53 +33,22 @@ struct ECGStyleDemo: View {
                         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                     
                     WaveView(ecgFunction)
-                        .amplitude(amplitude)
-                        .waveColor(.green)
-                        .animated(isAnimated)
-                        .renderMode3D(true)
-                        .isECG(true)
-                        .showGrid(showGrid)
+                        .waveform(amplitude: 1.0)
+                        .waveStyle(WaveStyle(color: .green))
+                        .animated(speed: 1.0)
+                        .gridStyle(.dense)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
                 .padding(.horizontal, 20)
                 
-                VStack(spacing: 24) {
-                    DemoSlider(title: "Signal Amplitude", value: $amplitude, range: 0.2...2.0, format: "%.2f")
-                    
-                    HStack(alignment: .center, spacing: 20) {
-                        Image(systemName: "heart.fill")
-                            .foregroundColor(.green)
-                            .symbolEffect(.pulse, options: .repeating, value: isAnimated)
-                        
-                        Toggle("Animate", isOn: $isAnimated)
-                            .labelsHidden()
-                            .tint(.green)
-                        
-                        Text("Animate")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundColor(.white)
-                        
-                        Toggle("Grid", isOn: $showGrid)
-                            .labelsHidden()
-                            .tint(.green)
-                        
-                        Text("Grid")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.vertical, 8)
-                }
-                .padding(30)
-                .background(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                CodeSnippetView(code: """
+                WaveView(ecgFunction)
+                    .waveform(amplitude: 1.0)
+                    .waveStyle(WaveStyle(color: .green))
+                    .animated(speed: 1.0)
+                    .gridStyle(.dense)
+                """)
                 
                 Spacer()
             }

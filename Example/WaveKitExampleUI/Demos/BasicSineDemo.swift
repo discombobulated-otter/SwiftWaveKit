@@ -2,11 +2,6 @@ import SwiftUI
 import WaveKit
 
 struct BasicSineDemo: View {
-    @State private var amplitude: Double = 1.0
-    @State private var frequency: Double = 2.0
-    @State private var isAnimated: Bool = true
-    @State private var showGrid: Bool = true
-    
     var body: some View {
         ZStack {
             // Background
@@ -40,49 +35,22 @@ struct BasicSineDemo: View {
                         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                     
                     WaveView(.sine)
-                        .amplitude(amplitude)
-                        .frequency(frequency)
-                        .waveColor(.cyan)
-                        .animated(isAnimated)
-                        .renderMode3D(true)
-                        .isPureTone(true)
-                        .showGrid(showGrid)
+                        .waveform(amplitude: 1.0, frequency: 2.0)
+                        .waveStyle(.neon)
+                        .animated(speed: 1.0)
+                        .gridStyle(.subtle)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
                 .padding(.horizontal, 20)
                 
-                // Controls Panel
-                VStack(spacing: 24) {
-                    DemoSlider(title: "Amplitude", value: $amplitude, range: 0.1...2.5, format: "%.2f")
-                    DemoSlider(title: "Frequency", value: $frequency, range: 0.5...6.0, format: "%.1f")
-                    
-                    Toggle(isOn: $isAnimated) {
-                        Text("Animate Movement")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                    .tint(.cyan)
-                    
-                    Toggle(isOn: $showGrid) {
-                        Text("Show 3D Grid")
-                            .font(.system(.subheadline, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                    .tint(.cyan)
-                }
-                .padding(30)
-                .background(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                CodeSnippetView(code: """
+                WaveView(.sine)
+                    .waveform(amplitude: 1.0, frequency: 2.0)
+                    .waveStyle(.neon)
+                    .animated(speed: 1.0)
+                    .gridStyle(.subtle)
+                """)
                 
                 Spacer()
             }

@@ -12,26 +12,94 @@ import SwiftUI
 
 extension View {
 
-    /// Sets the amplitude (vertical scale) of the wave.
+    // MARK: - New API Combinators
+
+    /// Sets the shape parameters of the wave (amplitude, frequency, phase).
+    public func waveform(amplitude: Double = 1.0, frequency: Double = 1.0, phase: Double = 0.0) -> some View {
+        self
+            .environment(\.waveAmplitude, amplitude)
+            .environment(\.waveFrequency, frequency)
+            .environment(\.wavePhase, phase)
+    }
+
+    /// Sets the visual styling of the wave.
+    public func waveStyle(_ style: WaveStyle) -> some View {
+        self
+            .environment(\.waveStrokeColor, style.color)
+            .environment(\.waveLineWidth, style.lineWidth)
+            .environment(\.waveOpacity, style.opacity)
+            .environment(\.waveGlowIntensity, style.glowIntensity)
+            .environment(\.waveGradient, style.gradient)
+    }
+
+    /// Sets the styling for the 3D perspective floor grid.
+    public func gridStyle(_ style: WaveGridStyle) -> some View {
+        self
+            .environment(\.waveGridColor, style.color)
+            .environment(\.waveGridLineWidth, style.lineWidth)
+            .environment(\.waveGridOpacity, style.opacity)
+            .environment(\.waveGridLineCount, style.lineCount)
+    }
+
+    /// Sets the styling for the vertical drop lines.
+    public func dropLineStyle(_ style: WaveDropLineStyle) -> some View {
+        self
+            .environment(\.waveDropLineColor, style.color)
+            .environment(\.waveDropLineLineWidth, style.lineWidth)
+            .environment(\.waveDropLineOpacity, style.opacity)
+            .environment(\.waveDropLineCount, style.lineCount)
+    }
+
+    /// Sets the 3D camera angle and zoom.
+    public func cameraAngle(_ config: WaveCameraConfig) -> some View {
+        environment(\.waveCameraAngle, config)
+    }
+
+    /// Configures the continuous phase-shift animation.
     ///
-    /// - Parameter value: The amplitude multiplier. Default is `1.0`.
-    /// - Returns: A modified view.
+    /// - Parameter speed: The animation speed multiplier. Pass `nil` to disable animation.
+    public func animated(speed: Double?) -> some View {
+        self
+            .environment(\.waveAnimated, speed != nil)
+            .environment(\.waveAnimationSpeed, speed ?? 1.0)
+    }
+
+    /// Configures a target wave for interference comparison.
+    ///
+    /// - Parameter target: The target wave configuration. Pass `nil` to remove interference.
+    @ViewBuilder
+    public func interference(with target: TargetWave?) -> some View {
+        if let target = target {
+            self
+                .environment(\.waveTargetFunction, target.function)
+                .environment(\.waveTargetAmplitude, target.amplitude)
+                .environment(\.waveTargetFrequency, target.frequency)
+                .environment(\.waveTargetPhase, target.phase)
+                .environment(\.waveTargetColor, target.color)
+        } else {
+            self
+                .environment(\.waveTargetFunction, nil)
+        }
+    }
+
+    /// Forces the wave to render in 2D vector mode instead of the default 3D SceneKit mode.
+    public func render2D() -> some View {
+        environment(\.waveRenderMode, .twoDimensional)
+    }
+
+    // MARK: - Deprecated Granular API
+
+    @available(*, deprecated, renamed: "waveform(amplitude:frequency:phase:)")
     public func amplitude(_ value: Double) -> some View {
         environment(\.waveAmplitude, value)
     }
 
-    /// Sets the frequency (horizontal scale) of the wave.
-    ///
-    /// - Parameter value: The frequency multiplier. Default is `1.0`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveform(amplitude:frequency:phase:)")
     public func frequency(_ value: Double) -> some View {
         environment(\.waveFrequency, value)
     }
 
-    /// Sets the phase offset of the wave.
-    ///
-    /// - Parameter value: The phase offset in radians. Default is `0`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveform(amplitude:frequency:phase:)")
     public func phase(_ value: Double) -> some View {
         environment(\.wavePhase, value)
     }
@@ -54,34 +122,17 @@ extension View {
         environment(\.waveSampleCount, count)
     }
 
-    /// Sets the stroke color of the wave.
-    ///
-    /// - Parameter color: The stroke color. Default is `.primary`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveStyle(_:)")
     public func waveColor(_ color: Color) -> some View {
         environment(\.waveStrokeColor, color)
     }
 
-    /// Sets the line width of the wave stroke.
-    ///
-    /// - Parameter width: The line width. Default is `2.0`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveStyle(_:)")
     public func waveLineWidth(_ width: CGFloat) -> some View {
         environment(\.waveLineWidth, width)
     }
 
-    /// Applies a gradient to the wave stroke.
-    ///
-    /// ```swift
-    /// WaveView(.sine)
-    ///     .gradient(.linear, colors: [.blue, .purple])
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - style: The gradient style (`.linear`, `.radial`, or `.angular`).
-    ///   - colors: The gradient colors.
-    ///   - direction: The gradient direction (used for `.linear` style). Default is `.vertical`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveStyle(_:)")
     public func gradient(
         _ style: WaveGradientStyle,
         colors: [Color],
@@ -95,12 +146,7 @@ extension View {
         return environment(\.waveGradient, waveGrad)
     }
 
-    /// Sets the gradient direction for the wave.
-    ///
-    /// Only takes effect if a gradient has already been set via `.gradient(...)`.
-    ///
-    /// - Parameter direction: `.horizontal` or `.vertical`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "waveStyle(_:)")
     public func gradientDirection(_ direction: WaveGradientDirection) -> some View {
         transformEnvironment(\.waveGradient) { gradient in
             gradient?.direction = direction
@@ -115,28 +161,14 @@ extension View {
         environment(\.waveVerticalOffset, offset)
     }
 
-    /// Enables or disables continuous wave animation.
-    ///
-    /// When enabled, the wave's phase continuously shifts to create
-    /// a traveling wave effect.
-    ///
-    /// - Parameter enabled: Whether animation is enabled. Default is `true`.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "animated(speed:)")
     public func animated(_ enabled: Bool = true) -> some View {
         environment(\.waveAnimated, enabled)
     }
 
-    /// Sets the animation speed of the wave.
-    ///
-    /// - Parameter speed: The speed multiplier. Default is `1.0`. Higher values = faster animation.
-    /// - Returns: A modified view.
+    @available(*, deprecated, renamed: "animated(speed:)")
     public func animationSpeed(_ speed: Double) -> some View {
         environment(\.waveAnimationSpeed, speed)
-    }
-    
-    /// Sets the rendering mode to 3D.
-    public func renderMode3D(_ enabled: Bool = true) -> some View {
-        environment(\.waveRenderMode, enabled ? .threeDimensional : .twoDimensional)
     }
 
     /// Sets the progress length of the wave along the Z-axis (0.0 to 1.0).
@@ -144,9 +176,10 @@ extension View {
         environment(\.waveProgress, value)
     }
 
-    /// Shows or hides the target matching wave for comparison.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func showInterference(_ enabled: Bool) -> some View {
-        environment(\.waveShowInterference, enabled)
+        // Obsolete modifier
+        self
     }
 
     /// Animates the alignment (transitioning target and user wave overlap).
@@ -154,43 +187,30 @@ extension View {
         environment(\.waveIsAligning, enabled)
     }
 
-    /// Sets the amplitude of the target matching wave.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func targetAmplitude(_ value: Double) -> some View {
         environment(\.waveTargetAmplitude, value)
     }
 
-    /// Sets the frequency of the target matching wave.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func targetFrequency(_ value: Double) -> some View {
         environment(\.waveTargetFrequency, value)
     }
 
-    /// Sets the phase of the target matching wave.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func targetPhase(_ value: Double) -> some View {
         environment(\.waveTargetPhase, value)
     }
 
-    /// Sets the color of the target matching wave.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func targetColor(_ color: Color) -> some View {
         environment(\.waveTargetColor, color)
     }
 
-    /// Sets a custom target function for the comparison wave.
+    @available(*, deprecated, renamed: "interference(with:)")
     public func targetFunction(_ function: WaveFunction) -> some View {
         environment(\.waveTargetFunction, function)
     }
 
-    /// Toggles pure tone rendering mode (removes secondary frequencies).
-    public func isPureTone(_ enabled: Bool) -> some View {
-        environment(\.waveIsPureTone, enabled)
-    }
 
-    /// Toggles ECG heartbeat rendering mode.
-    public func isECG(_ enabled: Bool) -> some View {
-        environment(\.waveIsECG, enabled)
-    }
-
-    /// Toggles visibility of the 3D grid.
-    public func showGrid(_ enabled: Bool = true) -> some View {
-        environment(\.waveShowGrid, enabled)
-    }
 }
