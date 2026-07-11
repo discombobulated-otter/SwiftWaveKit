@@ -1,17 +1,17 @@
 # WaveKit 🌊
 
-A lightweight, powerful, and highly customizable Swift Package for rendering mathematical wave functions in SwiftUI. Natively supports both smooth **2D vector shape plotting** and hardware-accelerated, glowing **3D SceneKit ribbon visualizers**.
+A lightweight, powerful, and highly customizable Swift Package for rendering mathematical wave functions in SwiftUI. Renders glowing, hardware-accelerated **3D SceneKit ribbon visualizers** by default, with a **2D vector shape** mode available as an opt-out.
 
 ---
 
 ## Features
 
 - 🧮 **Any Mathematical Function**: Render arbitrary equations mapping `Double → Double` via closures.
-- 🎛️ **SwiftUI Native Modifiers**: Customize styling using environment-driven modifiers (amplitude, frequency, line width, animation speed, color, gradients, and offsets).
-- 🎚️ **Wave Composition**: Compose complex waves using operator overloads like `+`, `-`, and `*` (e.g., superposition, amplitude modulation).
+- 🎛️ **SwiftUI Native Modifiers**: A small set of grouped, struct-based modifiers cover styling, animation, grid, drop lines, and camera — no need to chain a dozen calls for one visual decision.
+- 🎚️ **Wave Composition**: Compose complex waves using operator overloads like `+`, `-`, and `*` (e.g., superposition, amplitude modulation). This is also how you build specialized looks (ECG-style, pure tones, etc.) — see [Composing Custom Wave Shapes](#composing-custom-wave-shapes).
 - 🎨 **Preset Waveforms**: Built-in presets including Sine, Cosine, Triangle, Square, Sawtooth, Damped Oscillation, and Gaussian Bell curves.
-- 🔌 **Native 3D SceneKit Ribbon Rendering**: Render floating glowing ribbons in 3D using `.renderMode3D(true)`, with perspective grids and depth drop-lines.
-- 🎯 **Match Play & Interference**: Support for comparing target and user waveforms, alignment transition animations, and interference visualizations.
+- 🔌 **3D by Default**: `WaveView` renders a glowing SceneKit ribbon out of the box — no flag needed. Drop to 2D with a single `.render2D()` when you want a flat vector path instead.
+- 🎯 **Match Play & Interference**: Compare a target waveform against the primary wave, with alignment transitions and interference visualization, via one `.interference(with:)` modifier.
 - 📦 **Zero External Dependencies**: Built entirely on standard system frameworks (`SwiftUI`, `SceneKit`, `Combine`, and `QuartzCore`).
 
 ---
@@ -20,10 +20,12 @@ A lightweight, powerful, and highly customizable Swift Package for rendering mat
 1. [Installation](#installation)
 2. [Architecture Overview](#architecture-overview)
 3. [Quick Start](#quick-start)
-4. [2D vs 3D Rendering Modes](#2d-vs-3d-rendering-modes)
-5. [Complete API Reference](#complete-api-reference)
-6. [Included Examples & Demos](#included-examples--demos)
-7. [Simulator Target Troubleshooting](#simulator-target-troubleshooting)
+4. [Composing Custom Wave Shapes](#composing-custom-wave-shapes)
+5. [2D vs 3D Rendering Modes](#2d-vs-3d-rendering-modes)
+6. [Complete API Reference](#complete-api-reference)
+7. [Migrating from Pre-1.0 Modifiers](#migrating-from-pre-10-modifiers)
+8. [Included Examples & Demos](#included-examples--demos)
+9. [Simulator Target Troubleshooting](#simulator-target-troubleshooting)
 
 ---
 
@@ -34,14 +36,14 @@ Add `WaveKit` to your project using Swift Package Manager.
 ### Xcode Package Dependency
 Go to `File` → `Add Packages...` and enter the repository path:
 ```text
-https://github.com/discombobulated-otter/SwiftWaveKit.git
+https://github.com/kartikkaushikk/SwiftWaveKit.git
 ```
 
 ### Package.swift
 Add it as a dependency in your package manifest:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/discombobulated-otter/SwiftWaveKit", from: "0.1.1")
+    .package(url: "https://github.com/kartikkaushikk/SwiftWaveKit", from: "0.1.1")
 ]
 ```
 Then add the library target to your dependencies:
@@ -59,28 +61,28 @@ WaveKit is designed around a clean separation between mathematical logic and ren
 graph TD
     A[WaveFunction] --> B[WaveView]
     B --> C{Render Mode}
-    C -->|2D| D[FunctionShape]
-    C -->|3D| E[WaveVisualizer3D]
+    C -->|default| E[WaveVisualizer3D]
+    C -->|.render2D| D[FunctionShape]
     D --> F[SwiftUI Shape Path]
     E --> G[SceneKit SCNView Ribbon]
 ```
 
 ### Core Components
-1. **`WaveFunction`** ([WaveFunction.swift](file:///Users/kartik/Desktop/WaveKit/Sources/WaveKit/WaveFunction.swift))
+1. **`WaveFunction`** ([WaveFunction.swift]( WaveKit/Sources/WaveKit/WaveFunction.swift))
    - A wrapper around a `@Sendable (Double) -> Double` closure.
    - Handles math operations and function composition via operator overloads.
-2. **`FunctionShape`** ([FunctionShape.swift](file:///Users/kartik/Desktop/WaveKit/Sources/WaveKit/FunctionShape.swift))
-   - A SwiftUI `Shape` that samples the `WaveFunction` over a specific x-range, mapping coordinates to `Path` points for native 2D drawing.
-3. **`WaveVisualizer3D`** ([WaveVisualizer3D.swift](file:///Users/kartik/Desktop/WaveKit/Sources/WaveKit/WaveVisualizer3D.swift))
-   - A SceneKit-backed coordinate mapper that renders waveforms as glowing 3D triangle-strip ribbons with trailing slices fading into the background.
-4. **`WaveView`** ([WaveView.swift](file:///Users/kartik/Desktop/WaveKit/Sources/WaveKit/WaveView.swift))
-   - The primary unified public entry point. It reads customization from the SwiftUI environment and toggles between 2D and 3D rendering modes dynamically.
+2. **`FunctionShape`** ([FunctionShape.swift]( WaveKit/Sources/WaveKit/FunctionShape.swift))
+   - A SwiftUI `Shape` that samples the `WaveFunction` over a specific x-range, mapping coordinates to `Path` points for native 2D drawing. Used only when `.render2D()` is applied.
+3. **`WaveVisualizer3D`** ([WaveVisualizer3D.swift]( WaveKit/Sources/WaveKit/WaveVisualizer3D.swift))
+   - A SceneKit-backed coordinate mapper that renders waveforms as glowing 3D triangle-strip ribbons with a configurable perspective grid, drop lines, and camera. This is the default rendering path.
+4. **`WaveView`** ([WaveView.swift]( WaveKit/Sources/WaveKit/WaveView.swift))
+   - The primary unified public entry point. It reads customization from the SwiftUI environment and routes between 3D (default) and 2D rendering.
 
 ---
 
 ## Quick Start
 
-### 1. Rendering a Basic Preset Sine Wave (2D)
+### 1. Zero Config — Looks Finished Out of the Box
 ```swift
 import SwiftUI
 import WaveKit
@@ -88,86 +90,165 @@ import WaveKit
 struct SimpleView: View {
     var body: some View {
         WaveView(.sine)
-            .amplitude(1.5)
-            .frequency(2.0)
-            .waveColor(.blue)
-            .waveLineWidth(3)
-            .frame(height: 200)
+            .frame(height: 300)
     }
 }
 ```
+This alone renders an animated, glowing 3D ribbon with a sensible camera angle and grid — no modifiers required.
 
-### 2. Custom Closure Wave Function
+### 2. Typical Customization
+```swift
+WaveView(.sine)
+    .waveform(amplitude: 1.5, frequency: 2.0)
+    .waveStyle(.neon)
+    .animated(speed: 1.5)
+    .frame(height: 300)
+```
+
+### 3. Custom Closure Wave Function
 ```swift
 let customWave = WaveFunction { x in
     sin(x) * cos(2 * x)
 }
 
 WaveView(customWave)
-    .waveColor(.purple)
-    .animated(true)
-    .animationSpeed(1.5)
+    .waveStyle(.init(color: .purple, opacity: 0.9, glowIntensity: 0.6))
     .frame(height: 250)
 ```
 
-### 3. Activating Native 3D Rendering Mode
+### 4. Opting Out to 2D
 ```swift
 WaveView(.sine)
-    .amplitude(1.0)
-    .frequency(3.0)
-    .waveColor(.cyan)
-    .renderMode3D(true) // Turns the 2D path into a 3D ribbon
+    .waveform(amplitude: 1.0, frequency: 3.0)
+    .waveStyle(.init(color: .cyan))
+    .render2D() // flat SwiftUI vector path instead of the 3D ribbon
     .frame(height: 300)
 ```
 
 ---
 
+## Composing Custom Wave Shapes
+
+Earlier versions of WaveKit had dedicated flags like `.isECG(true)` for specific "looks." These were removed — they were style presets pretending to be part of the core API, and they capped what the library could express to whatever a handful of hardcoded flags anticipated.
+
+Instead, build the shape you want using `WaveFunction`'s operator overloads and presets, then style it:
+
+```swift
+// ECG-style heartbeat ribbon
+let ecgLike = WaveFunction.sine * 0.3 + WaveFunction.gaussian(width: 0.1)
+
+WaveView(ecgLike)
+    .waveStyle(.init(color: .green, glowIntensity: 0.8))
+```
+
+```swift
+// Pure tone (single frequency, no composite harmonics)
+WaveView(.sine)
+    .waveform(amplitude: 1.0, frequency: 2.0)
+```
+
+More recipes live in [Included Examples & Demos](#included-examples--demos) — contributions of new `WavePreset` entries are welcome.
+
+---
+
 ## 2D vs 3D Rendering Modes
 
-WaveKit's unified API lets you toggle rendering backends dynamically:
+3D is the default; 2D is the explicit opt-out via `.render2D()`.
 
-| Capability | 2D Vector Mode (`.renderMode3D(false)`) | 3D SceneKit Mode (`.renderMode3D(true)`) |
+| Capability | 3D SceneKit Mode (default) | 2D Vector Mode (`.render2D()`) |
 |---|---|---|
-| **Render Target** | SwiftUI Vector `Path` | SceneKit hardware-accelerated 3D mesh |
-| **Styling** | Stroke Colors & Gradients | Glowing neon emission shaders |
-| **Glow / Bloom** | SwiftUI Shadow modifiers | High-pass SceneKit post-process Bloom |
-| **Interference** | Layered overlay views | 3D ribbon alignment and drop-line overlay |
-| **Damping** | Computed via math closure | Dynamic Z-axis depth damping |
-| **Progress** | SwiftUI Clipped masks | Dynamic Z-depth segment limitation |
+| **Render Target** | SceneKit hardware-accelerated 3D mesh | SwiftUI Vector `Path` |
+| **Styling** | Glowing neon emission shaders (`.waveStyle`) | Stroke colors & gradients (`.waveStyle`) |
+| **Glow / Bloom** | `glowIntensity` on `WaveStyle` | Not applicable |
+| **Grid / Drop Lines** | `.gridStyle()`, `.dropLineStyle()` | Not applicable |
+| **Camera** | `.cameraAngle()` | Not applicable |
+| **Interference** | 3D ribbon alignment and drop-line overlay | Layered overlay views |
+| **Progress** | Dynamic Z-depth segment limitation | SwiftUI clipped masks |
+
+> [!NOTE]
+> Rendering 3D by default means every `WaveView` spins up an `SCNView`. If you're placing many wave instances in a list or dashboard, consider `.render2D()` for those — see [Simulator Target Troubleshooting](#simulator-target-troubleshooting) and open issues for ongoing perf notes.
 
 ---
 
 ## Complete API Reference
 
-WaveKit uses SwiftUI environment keys to pass parameters down the view tree. You can configure any `WaveView` with the following modifiers:
+WaveKit uses SwiftUI environment keys under the hood, but the public surface is a small set of grouped modifiers.
 
-### General Customization
-- **`.amplitude(_ value: Double)`**: Sets the vertical scale. Defaults to `1.0`.
-- **`.frequency(_ value: Double)`**: Sets the horizontal scaling factor. Defaults to `1.0`.
-- **`.phase(_ value: Double)`**: Sets the static phase offset in radians. Defaults to `0.0`.
-- **`.xRange(_ range: ClosedRange<Double>)`**: Evaluates the function over this range. Defaults to `0...2π` (only affects 2D mode).
-- **`.sampleCount(_ count: Int)`**: Sets the number of coordinate points. Defaults to `200` (only affects 2D mode).
-- **`.waveColor(_ color: Color)`**: Sets the primary stroke or ribbon emission color. Defaults to `.primary`.
-- **`.waveLineWidth(_ width: CGFloat)`**: Sets the stroke line width. Defaults to `2.0`.
+### Wave Shape
+- **`.waveform(amplitude:frequency:phase:)`**: Sets vertical scale, horizontal scale, and phase offset together. Defaults: `amplitude: 1.0`, `frequency: 1.0`, `phase: 0.0`.
+- **`.xRange(_ range: ClosedRange<Double>)`**: Domain the function is evaluated over. Defaults to `0...2π` (2D mode only).
+- **`.sampleCount(_ count: Int)`**: Resolution of the rendered path. Defaults to `200` (2D mode only).
 - **`.verticalOffset(_ offset: Double)`**: Translates the wave vertically in amplitude units. Defaults to `0.0`.
-- **`.animated(_ enabled: Bool)`**: Toggles continuous phase-shift animation. Defaults to `true`.
-- **`.animationSpeed(_ speed: Double)`**: Phase shift multiplier. Defaults to `1.0`.
 
-### 3D Render Specific Customization
-- **`.renderMode3D(_ enabled: Bool)`**: Toggles between 2D vector path and 3D SceneKit ribbons. Defaults to `false`.
+### Style
+- **`.waveStyle(_ style: WaveStyle)`**: Controls color, line width, opacity, glow intensity, and gradient in one call.
+  ```swift
+  struct WaveStyle {
+      var color: Color = .primary
+      var lineWidth: CGFloat = 2
+      var opacity: Double = 1.0
+      var glowIntensity: Double = 0.0
+      var gradient: WaveGradient? = nil
+  }
+  ```
+  Presets: `.neon`, `.minimal`.
+
+### Animation
+- **`.animated(speed: Double? = 1.0)`**: Toggles continuous phase-shift animation and sets its speed multiplier. Pass `nil` or `false` to disable.
+
+### 3D Grid & Drop Lines
+- **`.gridStyle(_ style: WaveGridStyle)`**: Controls the perspective floor grid — color, line width, opacity, and line count. `lineCount: 0` hides the grid entirely.
+- **`.dropLineStyle(_ style: WaveDropLineStyle)`**: Controls the vertical drop lines connecting the ribbon to the base — same fields, independent of grid. `lineCount: 0` hides drop lines entirely.
+
+  Grid and drop lines are independent — you can show one without the other. Presets: `.subtle`, `.dense` (on both types).
+
+### Camera
+- **`.cameraAngle(_ config: WaveCameraConfig)`**: Sets azimuth, elevation, and distance for the 3D camera.
+  ```swift
+  struct WaveCameraConfig {
+      var azimuth: Double = 0.0
+      var elevation: Double = 15.0
+      var distance: Double = 10.0
+  }
+  ```
+  Presets: `.front`, `.iso` (default).
+
+### Progress & Mode
 - **`.progress(_ value: Double)`**: Limits the portion of the 3D wave generated along the Z-depth axis (`0.0` to `1.0`). Defaults to `1.0`.
-- **`.isECG(_ enabled: Bool)`**: Toggles specialized green glowing 3D cardiac PQRST heartbeat ribbon geometry. Defaults to `false`.
-- **`.isPureTone(_ enabled: Bool)`**: Toggles pure tone rendering mode (removes secondary/composite frequencies in the visualizer). Defaults to `false`.
-- **`.showGrid(_ enabled: Bool)`**: Toggles visibility of the 3D perspective grid. Defaults to `true`.
+- **`.render2D()`**: Opts out of the default 3D rendering in favor of a flat SwiftUI vector path.
 
-### Target Matching & Interference (3D Mode)
-- **`.showInterference(_ enabled: Bool)`**: Render a secondary comparison target wave alongside the main user wave. Defaults to `false`.
-- **`.targetFunction(_ function: WaveFunction)`**: Math configuration for the comparison wave.
-- **`.targetAmplitude(_ value: Double)`**: Vertically scales comparison wave. Defaults to `1.0`.
-- **`.targetFrequency(_ value: Double)`**: Horizontally scales comparison wave. Defaults to `1.0`.
-- **`.targetPhase(_ value: Double)`**: Phase offset for comparison wave. Defaults to `0.0`.
-- **`.targetColor(_ color: Color)`**: Emissive color for comparison wave. Defaults to `.white`.
-- **`.isAligning(_ enabled: Bool)`**: Toggles transition alignment. When true, user and target waves slide together into the center grid line to show overlapping interference patterns. Defaults to `false`.
+### Target Matching & Interference
+- **`.interference(with target: TargetWave?)`**: Renders a secondary comparison wave alongside the primary one. Passing `nil` disables it — no separate show/hide flag.
+  ```swift
+  struct TargetWave {
+      var function: WaveFunction
+      var amplitude: Double = 1.0
+      var frequency: Double = 1.0
+      var phase: Double = 0.0
+      var color: Color = .white
+      var isAligning: Bool = false
+  }
+  ```
+
+---
+
+## Migrating from Pre-1.0 Modifiers
+
+The original fine-grained modifiers remain available as deprecated wrappers around the same underlying state, so existing code keeps compiling — except where noted as a hard break.
+
+| Old | New |
+|---|---|
+| `.amplitude()`, `.frequency()`, `.phase()` | `.waveform(amplitude:frequency:phase:)` |
+| `.waveColor()`, `.waveLineWidth()`, `.gradient()`, `.gradientDirection()` | `.waveStyle(_:)` |
+| `.animated()` + `.animationSpeed()` | `.animated(speed:)` |
+| `.renderMode3D(true)` | *(default now — remove the call)* |
+| `.renderMode3D(false)` | `.render2D()` |
+| `.isECG(true)` / `.isPureTone(true)` | Compose the shape via `WaveFunction` — see [Composing Custom Wave Shapes](#composing-custom-wave-shapes) |
+| `.showGrid(_:)` | **Removed.** Use `.gridStyle(.init(lineCount: 0))` to hide, or `.gridStyle(.dense)` / `.dropLineStyle(.dense)` |
+| `.showInterference()`, `.targetFunction()`, `.targetAmplitude()`, `.targetFrequency()`, `.targetPhase()`, `.targetColor()`, `.isAligning()` | `.interference(with: TargetWave(...))`, or `.interference(with: nil)` to disable |
+
+> [!WARNING]
+> `.showGrid(_:)` has no direct drop-in replacement modifier — it's removed outright. Apps using it must migrate to `.gridStyle(...)` / `.dropLineStyle(...)`, since grid and drop lines are now independently controlled.
 
 ---
 
@@ -175,21 +256,21 @@ WaveKit uses SwiftUI environment keys to pass parameters down the view tree. You
 
 The library package includes an executable suite (`WaveKitExample`) with a premium, glassmorphic dark-mode dashboard showcasing 8 visualization demos:
 
-1. **Basic Sine** ([BasicSineDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/BasicSineDemo.swift))
-   - A single cyan sine wave showcasing simple amplitude and frequency adjustments.
-2. **Multiple Waves** ([MultipleWavesDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/MultipleWavesDemo.swift))
+1. **Basic Sine** ([BasicSineDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/BasicSineDemo.swift))
+   - A single cyan sine wave showcasing `.waveform()` and `.waveStyle()`.
+2. **Multiple Waves** ([MultipleWavesDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/MultipleWavesDemo.swift))
    - Composite wave superposition showing the sum of two independent frequencies (`+` operator composition).
-3. **Damped Decay** ([DampedWaveDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/DampedWaveDemo.swift))
+3. **Damped Decay** ([DampedWaveDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/DampedWaveDemo.swift))
    - Simulates a damped oscillator losing energy over distance (`WaveFunction.damped` preset).
-4. **Ocean & Interference** ([OceanEffectDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/OceanEffectDemo.swift))
-   - Renders Cyan (User) and Blue (Target) waves side-by-side. Tapping "Overlap" slides them together to demonstrate additive interference.
-5. **3D ECG Heartbeat** ([ECGStyleDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/ECGStyleDemo.swift))
-   - A scrolling green glowing ribbon mimicking the electrical cycle of a heartbeat (Gaussian-envelope QRS complex).
-6. **Loading Indicators** ([LoadingIndicatorDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/LoadingIndicatorDemo.swift))
+4. **Ocean & Interference** ([OceanEffectDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/OceanEffectDemo.swift))
+   - Renders a primary and target wave via `.interference(with:)`. Tapping "Overlap" triggers `isAligning` to slide them together.
+5. **3D ECG Heartbeat** ([ECGStyleDemo.swift](WaveKit/Example/WaveKitExampleUI/Demos/ECGStyleDemo.swift))
+   - A scrolling green glowing ribbon mimicking a heartbeat, built by composing `WaveFunction` presets rather than a dedicated flag — see [Composing Custom Wave Shapes](#composing-custom-wave-shapes).
+6. **Loading Indicators** ([LoadingIndicatorDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/LoadingIndicatorDemo.swift))
    - Shows rhythmic amplitude pulses and 3D card spins powered by SwiftUI timers and modifiers.
-7. **Z-Depth Progress** ([ProgressWaveDemo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/ProgressWaveDemo.swift))
-   - Controls progress rendering from `0%` to `100%` by generating wave ribbon segments along the Z-axis.
-8. **AM Modulation** ([WaveQuestLevel5Demo.swift](file:///Users/kartik/Desktop/WaveKit/Example/WaveKitExampleUI/Demos/WaveQuestLevel5Demo.swift))
+7. **Z-Depth Progress** ([ProgressWaveDemo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/ProgressWaveDemo.swift))
+   - Controls progress rendering from `0%` to `100%` via `.progress()`.
+8. **AM Modulation** ([WaveQuestLevel5Demo.swift]( WaveKit/Example/WaveKitExampleUI/Demos/WaveQuestLevel5Demo.swift))
    - Standard AM radio envelope superposition created by multiplying carrier and modulator wave functions (`*` operator composition).
 
 ---
