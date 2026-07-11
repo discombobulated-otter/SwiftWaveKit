@@ -2,12 +2,6 @@ import SwiftUI
 import WaveKit
 
 struct WaveQuestLevel5Demo: View {
-    @State private var carrierFreq: Double = 5.0
-    @State private var modDepth: Double = 0.8
-    @State private var modFreq: Double = 0.5
-    @State private var isAnimated: Bool = true
-    @State private var showGrid: Bool = true
-    
     var body: some View {
         ZStack {
             LinearGradient(
@@ -38,55 +32,33 @@ struct WaveQuestLevel5Demo: View {
                         )
                         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                     
-                    let carrier = WaveFunction.sine(frequency: carrierFreq)
-                    let currentDepth = modDepth
-                    let currentFreq = modFreq
-                    let modulator = WaveFunction { x in 1.0 + currentDepth * sin(currentFreq * x) }
+                    let carrier = WaveFunction.sine(frequency: 5.0)
+                    let modulator = WaveFunction { x in 1.0 + 0.8 * sin(0.5 * x) }
                     let combined = modulator * carrier
                     
                     WaveView(combined)
-                        .amplitude(1.2)
-                        .waveColor(.purple)
-                        .animated(isAnimated)
-                        .renderMode3D(true)
-                        .showGrid(showGrid)
+                        .waveform(amplitude: 1.2)
+                        .waveStyle(WaveStyle(color: .purple))
+                        .animated(speed: 1.0)
+                        .gridStyle(.dense)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 280)
                 .padding(.horizontal, 20)
                 
-                VStack(spacing: 24) {
-                    DemoSlider(title: "Carrier Frequency", value: $carrierFreq, range: 1.0...10.0, format: "%.1f")
-                    DemoSlider(title: "Modulation Depth", value: $modDepth, range: 0.0...1.0, format: "%.2f")
-                    DemoSlider(title: "Modulation Frequency", value: $modFreq, range: 0.1...2.0, format: "%.2f")
-                    
-                    HStack(spacing: 30) {
-                        Toggle(isOn: $isAnimated) {
-                            Text("Animate")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Toggle(isOn: $showGrid) {
-                            Text("Show Grid")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .tint(.purple)
+                CodeSnippetView(code: """
+                let carrier = WaveFunction.sine(frequency: 5.0)
+                let modulator = WaveFunction { x in 
+                    1.0 + 0.8 * sin(0.5 * x) 
                 }
-                .padding(30)
-                .background(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                let combined = modulator * carrier
+                
+                WaveView(combined)
+                    .waveform(amplitude: 1.2)
+                    .waveStyle(WaveStyle(color: .purple))
+                    .animated(speed: 1.0)
+                    .gridStyle(.dense)
+                """)
                 
                 Spacer()
             }

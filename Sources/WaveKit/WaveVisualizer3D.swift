@@ -24,7 +24,6 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
     @Environment(\.waveAnimationSpeed) private var animationSpeed
     
     @Environment(\.waveProgress) private var progress
-    @Environment(\.waveShowInterference) private var showInterference
     @Environment(\.waveIsAligning) private var isAligning
     
     @Environment(\.waveTargetAmplitude) private var targetAmplitude
@@ -32,8 +31,21 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
     @Environment(\.waveTargetPhase) private var targetPhase
     @Environment(\.waveTargetColor) private var targetColor
     @Environment(\.waveTargetFunction) private var targetFunction
-    @Environment(\.waveIsPureTone) private var isPureTone
-    @Environment(\.waveShowGrid) private var showGrid
+    
+    @Environment(\.waveOpacity) private var waveOpacity
+    @Environment(\.waveGlowIntensity) private var waveGlowIntensity
+    
+    @Environment(\.waveGridColor) private var gridColor
+    @Environment(\.waveGridLineWidth) private var gridLineWidth
+    @Environment(\.waveGridOpacity) private var gridOpacity
+    @Environment(\.waveGridLineCount) private var gridLineCount
+    
+    @Environment(\.waveDropLineColor) private var dropLineColor
+    @Environment(\.waveDropLineLineWidth) private var dropLineLineWidth
+    @Environment(\.waveDropLineOpacity) private var dropLineOpacity
+    @Environment(\.waveDropLineCount) private var dropLineCount
+    
+    @Environment(\.waveCameraAngle) private var cameraAngle
 
 #if os(macOS)
     func makeNSView(context: Context) -> SCNView {
@@ -81,8 +93,7 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
         ambNode.light = ambient
         scene.rootNode.addChildNode(ambNode)
 
-        let gridNode = buildGrid()
-        gridNode.name = "grid"
+        let gridNode = SCNNode(); gridNode.name = "grid"
         scene.rootNode.addChildNode(gridNode)
 
         let userWaveNode   = SCNNode(); userWaveNode.name   = "userWave"
@@ -96,6 +107,8 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
             userWaveNode: userWaveNode,
             targetWaveNode: targetWaveNode,
             dropLineNode: dropLineNode,
+            gridNode: gridNode,
+            cameraNode: cameraNode,
             userColor: PlatformColor(strokeColor),
             targetColor: PlatformColor(targetColor)
         )
@@ -121,56 +134,24 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
             tPh: Float(targetPhase),
             userColor: PlatformColor(strokeColor),
             targetColor: PlatformColor(targetColor),
-            showInterference: showInterference,
-            isPureTone: isPureTone,
             isAligning: isAligning,
             progress: Float(progress),
-            animationSpeed: Float(animationSpeed)
+            animationSpeed: Float(animationSpeed),
+            waveOpacity: Float(waveOpacity),
+            waveGlowIntensity: Float(waveGlowIntensity),
+            gridColor: PlatformColor(gridColor),
+            gridOpacity: Float(gridOpacity),
+            gridLineCount: gridLineCount,
+            dropLineColor: PlatformColor(dropLineColor),
+            dropLineOpacity: Float(dropLineOpacity),
+            dropLineCount: dropLineCount,
+            cameraAngle: cameraAngle
         )
-        
-        let gridNode = uiView.scene?.rootNode.childNode(withName: "grid", recursively: false)
-        gridNode?.isHidden = !showGrid
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    private func buildGrid() -> SCNNode {
-        let cols  = 24;  let rows  = 30
-        let cellW: Float = 0.5;  let cellD: Float = 0.5
-        let totalW = Float(cols) * cellW
-        let totalD = Float(rows) * cellD
-        let gridY: Float = -2.2
 
-        var verts: [SCNVector3] = []
-        var idx:   [Int32]      = []
-
-        func seg(_ a: SCNVector3, _ b: SCNVector3) {
-            idx.append(Int32(verts.count)); verts.append(a)
-            idx.append(Int32(verts.count)); verts.append(b)
-        }
-
-        for r in 0...rows {
-            let z = Float(r) * cellD
-            seg(SCNVector3(0, gridY, z), SCNVector3(totalW, gridY, z))
-        }
-        for c in 0...cols {
-            let x = Float(c) * cellW
-            seg(SCNVector3(x, gridY, 0), SCNVector3(x, gridY, totalD))
-        }
-
-        let geo  = SCNGeometry(sources: [SCNGeometrySource(vertices: verts)],
-                               elements: [SCNGeometryElement(indices: idx, primitiveType: .line)])
-        let mat  = SCNMaterial()
-        mat.lightingModel       = .constant
-        mat.diffuse.contents    = PlatformColor(red: 0.05, green: 0.35, blue: 0.9, alpha: 0.3)
-        mat.emission.contents   = PlatformColor(red: 0.0,  green: 0.25, blue: 0.8, alpha: 0.25)
-        mat.blendMode           = .add
-        mat.writesToDepthBuffer = false
-        geo.materials = [mat]
-
-        let node = SCNNode(); node.geometry = geo
-        return node
-    }
 
     // MARK: - Coordinator
 
@@ -178,6 +159,8 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
         private var userWaveNode:   SCNNode?
         private var targetWaveNode: SCNNode?
         private var dropLineNode:   SCNNode?
+        private var gridNode:       SCNNode?
+        private var cameraNode:     SCNNode?
 
         private var function: WaveFunction = .init { _ in 0.0 }
         private var targetFunction: WaveFunction?
@@ -187,20 +170,33 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
 
         private var userColor:   PlatformColor = .blue
         private var targetColor: PlatformColor = .white
-        private var showInterference = false
-        private var isPureTone = false
         private var isAligning = false
         private var alignProgress: Float = 0.0
         private var progress: Float = 1.0
         private var animationSpeed: Float = 1.0
+        
+        private var waveOpacity: Float = 1.0
+        private var waveGlowIntensity: Float = 0.0
+        
+        private var gridColor: PlatformColor = .gray
+        private var gridOpacity: Float = 0.3
+        private var gridLineCount: Int = 12
+        
+        private var dropLineColor: PlatformColor = .gray
+        private var dropLineOpacity: Float = 0.3
+        private var dropLineCount: Int = 30
+        
+        private var cameraAngle: WaveCameraConfig = .iso
 
         private let gridY: Float = -2.2
 
-        func setup(userWaveNode: SCNNode, targetWaveNode: SCNNode, dropLineNode: SCNNode,
+        func setup(userWaveNode: SCNNode, targetWaveNode: SCNNode, dropLineNode: SCNNode, gridNode: SCNNode, cameraNode: SCNNode,
                    userColor: PlatformColor, targetColor: PlatformColor) {
             self.userWaveNode   = userWaveNode
             self.targetWaveNode = targetWaveNode
             self.dropLineNode   = dropLineNode
+            self.gridNode       = gridNode
+            self.cameraNode     = cameraNode
             self.userColor      = userColor
             self.targetColor    = targetColor
         }
@@ -209,23 +205,51 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
                           amp: Float, freq: Float, ph: Float,
                           tAmp: Float, tFreq: Float, tPh: Float,
                           userColor: PlatformColor, targetColor: PlatformColor,
-                          showInterference: Bool, isPureTone: Bool, isAligning: Bool,
-                          progress: Float, animationSpeed: Float) {
+                          isAligning: Bool,
+                          progress: Float, animationSpeed: Float,
+                          waveOpacity: Float, waveGlowIntensity: Float,
+                          gridColor: PlatformColor, gridOpacity: Float, gridLineCount: Int,
+                          dropLineColor: PlatformColor, dropLineOpacity: Float, dropLineCount: Int,
+                          cameraAngle: WaveCameraConfig) {
             self.function = function
             self.targetFunction = targetFunction
             self.amp  = amp;  self.freq  = freq; self.ph  = ph
             self.tAmp = tAmp; self.tFreq = tFreq; self.tPh = tPh
             self.userColor = userColor
             self.targetColor = targetColor
-            self.showInterference = showInterference
-            self.isPureTone = isPureTone
             self.isAligning = isAligning
             self.progress = progress
             self.animationSpeed = animationSpeed
+            self.waveOpacity = waveOpacity
+            self.waveGlowIntensity = waveGlowIntensity
+            self.gridColor = gridColor
+            self.gridOpacity = gridOpacity
+            self.gridLineCount = gridLineCount
+            self.dropLineColor = dropLineColor
+            self.dropLineOpacity = dropLineOpacity
+            self.dropLineCount = dropLineCount
+            self.cameraAngle = cameraAngle
         }
 
         func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
             let t = Float(time) * 1.1 * animationSpeed
+            
+            // Update Camera
+            let az = Float(cameraAngle.azimuth) * .pi / 180.0
+            let el = Float(cameraAngle.elevation) * .pi / 180.0
+            let dist = Float(cameraAngle.distance)
+            
+            let dy = dist * sin(el)
+            let groundDist = dist * cos(el)
+            let dx = groundDist * sin(az)
+            let dz = groundDist * cos(az)
+            
+            #if os(macOS)
+            cameraNode?.position = SCNVector3(CGFloat(6.0 + dx), CGFloat(-1.0 + dy), CGFloat(5.0 + dz))
+            #else
+            cameraNode?.position = SCNVector3(6.0 + dx, -1.0 + dy, 5.0 + dz)
+            #endif
+            cameraNode?.look(at: SCNVector3(6.0, -1.0, 5.0))
             
             if isAligning {
                 alignProgress = min(alignProgress + 0.03, 1.0)
@@ -235,13 +259,19 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
             
             updateWave(node: userWaveNode, amp: amp, freq: freq, ph: ph, color: userColor, t: t, isTarget: false)
             
-            if showInterference {
+            if targetFunction != nil {
                 updateWave(node: targetWaveNode, amp: tAmp, freq: tFreq, ph: tPh, color: targetColor, t: t, isTarget: true)
             } else {
                 targetWaveNode?.geometry = nil
             }
             
             updateDropLines(t: t)
+            
+            if gridLineCount > 0 {
+                updateGrid()
+            } else {
+                gridNode?.geometry = nil
+            }
         }
 
         private func updateWave(node: SCNNode?, amp: Float, freq: Float, ph: Float, color: PlatformColor, t: Float, isTarget: Bool) {
@@ -277,9 +307,9 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
                 mat.isDoubleSided       = true
                 mat.writesToDepthBuffer = false
                 
-                mat.diffuse.contents = color.withAlphaComponent(CGFloat(alpha * 0.55))
-                let glowMultiplier: Float = isTarget ? 1.75 : 1.25
-                mat.emission.contents = color.withAlphaComponent(CGFloat(alpha * glowMultiplier))
+                mat.diffuse.contents = color.withAlphaComponent(CGFloat(alpha * 0.55 * waveOpacity))
+                let glowMultiplier: Float = isTarget ? 1.75 : (1.25 + waveGlowIntensity)
+                mat.emission.contents = color.withAlphaComponent(CGFloat(alpha * glowMultiplier * waveOpacity))
                 
                 let base = Int32(allVerts.count)
                 var segIdx: [Int32] = []
@@ -308,15 +338,86 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
             node.geometry = geo
         }
 
+        private func updateGrid() {
+            guard let node = gridNode else { return }
+
+            if gridLineCount <= 0 {
+                node.geometry = nil
+                return
+            }
+
+            let targetXOffset: Float = mix(9.6, 6.0, alignProgress)
+            let userXOffset: Float = mix(2.4, 6.0, alignProgress)
+            let ribbonWidth: Float = 4.25
+            let hasTarget = targetFunction != nil
+            
+            let minX = userXOffset - (ribbonWidth / 2) - 0.5
+            let maxX = hasTarget ? (targetXOffset + (ribbonWidth / 2) + 0.5) : (userXOffset + (ribbonWidth / 2) + 0.5)
+            
+            let totalW = maxX - minX
+            let startX = minX
+
+            let cols  = gridLineCount
+            let rows  = Int(Float(gridLineCount) * 1.25)
+            let totalD: Float = 15.0
+            let cellW: Float = totalW / Float(cols)
+            let cellD: Float = totalD / Float(rows)
+            
+            // Grid draws from Z=15.0 down to currentZMin
+            let currentZMin = totalD - (totalD * progress)
+
+            var verts: [SCNVector3] = []
+            var idx:   [Int32]      = []
+
+            func seg(_ a: SCNVector3, _ b: SCNVector3) {
+                idx.append(Int32(verts.count)); verts.append(a)
+                idx.append(Int32(verts.count)); verts.append(b)
+            }
+
+            for r in 0...rows {
+                let z = Float(r) * cellD
+                if z >= currentZMin {
+                    seg(SCNVector3(startX, gridY, z), SCNVector3(maxX, gridY, z))
+                }
+            }
+            
+            for c in 0...cols {
+                let x = startX + Float(c) * cellW
+                seg(SCNVector3(x, gridY, totalD), SCNVector3(x, gridY, currentZMin))
+            }
+
+            if verts.isEmpty {
+                node.geometry = nil
+                return
+            }
+
+            let geo  = SCNGeometry(sources: [SCNGeometrySource(vertices: verts)],
+                                   elements: [SCNGeometryElement(indices: idx, primitiveType: .line)])
+            let mat  = SCNMaterial()
+            mat.lightingModel       = .constant
+            mat.diffuse.contents    = gridColor.withAlphaComponent(CGFloat(gridOpacity))
+            mat.emission.contents   = gridColor.withAlphaComponent(CGFloat(gridOpacity * 0.5))
+            mat.blendMode           = .add
+            mat.writesToDepthBuffer = false
+            geo.materials = [mat]
+
+            node.geometry = geo
+        }
+
         private func updateDropLines(t: Float) {
             guard let node = dropLineNode else { return }
 
-            let interval = 4
+            if dropLineCount <= 0 {
+                node.geometry = nil
+                return
+            }
+            
             var allVerts: [SCNVector3] = []
             var elements: [SCNGeometryElement] = []
             var materials: [SCNMaterial] = []
             
             let segCount = 260
+            let interval = max(1, segCount / dropLineCount)
             let zStart: Float = 15.0
             let zEnd: Float = 0.0
             let zStep = (zEnd - zStart) / Float(segCount)
@@ -353,16 +454,16 @@ struct WaveVisualizer3D: PlatformViewRepresentable {
                 let mat = SCNMaterial()
                 mat.lightingModel       = .constant
                 let glowMult: Float = isTarget ? 1.2 : 0.8
-                mat.diffuse.contents    = color.withAlphaComponent(0.15 * CGFloat(glowMult))
-                mat.emission.contents   = color.withAlphaComponent(0.10 * CGFloat(glowMult))
+                mat.diffuse.contents    = color.withAlphaComponent(CGFloat(dropLineOpacity * 0.5 * glowMult))
+                mat.emission.contents   = color.withAlphaComponent(CGFloat(dropLineOpacity * 0.3 * glowMult))
                 mat.blendMode           = .add
                 mat.writesToDepthBuffer = false
                 materials.append(mat)
             }
             
-            generateLines(amp: self.amp, freq: self.freq, ph: self.ph, isTarget: false, color: self.userColor)
+            generateLines(amp: self.amp, freq: self.freq, ph: self.ph, isTarget: false, color: self.dropLineColor)
             
-            if self.showInterference {
+            if self.targetFunction != nil {
                 generateLines(amp: self.tAmp, freq: self.tFreq, ph: self.tPh, isTarget: true, color: self.targetColor)
             }
 

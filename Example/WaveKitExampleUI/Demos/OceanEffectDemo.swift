@@ -2,14 +2,6 @@ import SwiftUI
 import WaveKit
 
 struct OceanEffectDemo: View {
-    @State private var userAmp: Double = 1.0
-    @State private var userFreq: Double = 2.0
-    @State private var targetAmp: Double = 1.0
-    @State private var targetFreq: Double = 2.5
-    @State private var isAligning: Bool = false
-    @State private var isAnimated: Bool = true
-    @State private var showGrid: Bool = true
-    
     var body: some View {
         ZStack {
             LinearGradient(
@@ -40,81 +32,36 @@ struct OceanEffectDemo: View {
                         )
                         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                     
-                    let userFunction = WaveFunction.sine(frequency: userFreq)
-                    let targetFunction = WaveFunction.sine(frequency: targetFreq)
+                    let userFunction = WaveFunction.sine(frequency: 2.0)
+                    let targetFunction = WaveFunction.sine(frequency: 2.5)
                     
                     WaveView(userFunction)
-                        .amplitude(userAmp)
-                        .waveColor(.cyan)
-                        .targetFunction(targetFunction)
-                        .targetAmplitude(targetAmp)
-                        .targetColor(.blue)
-                        .showInterference(true)
-                        .isAligning(isAligning)
-                        .animated(isAnimated)
-                        .renderMode3D(true)
-                        .showGrid(showGrid)
+                        .waveform(amplitude: 1.0)
+                        .waveStyle(WaveStyle(color: .cyan))
+                        .interference(with: TargetWave(function: targetFunction, amplitude: 1.0, frequency: 2.5, color: .blue))
+                        .isAligning(true)
+                        .animated(speed: 1.0)
+                        .gridStyle(.subtle)
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 }
                 .frame(height: 250)
                 .padding(.horizontal, 20)
                 
-                VStack(spacing: 20) {
-                    // Align Toggle
-                    HStack(spacing: 30) {
-                        Toggle(isOn: $isAligning) {
-                            Text("Align Overlap")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Toggle(isOn: $showGrid) {
-                            Text("Show Grid")
-                                .font(.system(.subheadline, design: .rounded))
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .tint(.cyan)
-                    
-                    Divider().background(Color.white.opacity(0.1))
-                    
-                    VStack(spacing: 16) {
-                        Text("User Wave Controls (Cyan)")
-                            .font(.system(.caption, design: .rounded))
-                            .fontWeight(.bold)
-                            .foregroundColor(.cyan)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        DemoSlider(title: "Amplitude", value: $userAmp, range: 0.2...2.0, format: "%.2f")
-                        DemoSlider(title: "Frequency", value: $userFreq, range: 0.5...5.0, format: "%.1f")
-                    }
-                    
-                    Divider().background(Color.white.opacity(0.1))
-                    
-                    VStack(spacing: 16) {
-                        Text("Target Wave Controls (Blue)")
-                            .font(.system(.caption, design: .rounded))
-                            .fontWeight(.bold)
-                            .foregroundColor(.blue)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        DemoSlider(title: "Amplitude", value: $targetAmp, range: 0.2...2.0, format: "%.2f")
-                        DemoSlider(title: "Frequency", value: $targetFreq, range: 0.5...5.0, format: "%.1f")
-                    }
-                }
-                .padding(25)
-                .background(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(Color.white.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+                CodeSnippetView(code: """
+                let userFunction = WaveFunction.sine(frequency: 2.0)
+                let targetFunction = WaveFunction.sine(frequency: 2.5)
+                
+                WaveView(userFunction)
+                    .waveform(amplitude: 1.0)
+                    .waveStyle(WaveStyle(color: .cyan))
+                    .interference(with: TargetWave(
+                        function: targetFunction,
+                        amplitude: 1.0,
+                        frequency: 2.5,
+                        color: .blue
+                    ))
+                    .isAligning(true)
+                """)
                 
                 Spacer()
             }
